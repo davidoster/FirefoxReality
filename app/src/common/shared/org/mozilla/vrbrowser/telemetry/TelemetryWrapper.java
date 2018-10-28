@@ -20,7 +20,7 @@ import org.mozilla.telemetry.serialize.JSONPingSerializer;
 import org.mozilla.telemetry.storage.FileTelemetryStorage;
 import org.mozilla.vrbrowser.BuildConfig;
 import org.mozilla.vrbrowser.R;
-import org.mozilla.vrbrowser.SettingsStore;
+import org.mozilla.vrbrowser.browser.SettingsStore;
 import org.mozilla.vrbrowser.search.SearchEngine;
 import org.mozilla.vrbrowser.utils.UrlUtils;
 
@@ -86,7 +86,7 @@ public class TelemetryWrapper {
             final boolean telemetryEnabled = SettingsStore.getInstance(aContext).isTelemetryEnabled();
             final TelemetryConfiguration configuration = new TelemetryConfiguration(aContext)
                     .setServerEndpoint("https://incoming.telemetry.mozilla.org")
-                    .setAppName(APP_NAME + "_" + BuildConfig.FLAVOR)
+                    .setAppName(APP_NAME + "_" + BuildConfig.FLAVOR_platform)
                     .setUpdateChannel(BuildConfig.BUILD_TYPE)
                     .setPreferencesImportantForTelemetry(resources.getString(R.string.settings_key_locale))
                     .setCollectionEnabled(telemetryEnabled)
@@ -207,30 +207,38 @@ public class TelemetryWrapper {
             return;
         }
 
-        URI uriLink = URI.create(uri);
-        if (uriLink.getHost() == null) {
+        if (uri == null)
             return;
+
+        try {
+            URI uriLink = URI.create(uri);
+            if (uriLink.getHost() == null) {
+                return;
+            }
+
+            domainMap.add(UrlUtils.stripCommonSubdomains(uriLink.getHost()));
+            numUri++;
+
+            long elapsedLoad = SystemClock.elapsedRealtime() - startLoadPageTime;
+            if (elapsedLoad < MIN_LOAD_TIME) {
+                return;
+            }
+
+            int histogramLoadIndex = toIntExact(elapsedLoad / LOADING_BUCKET_SIZE_MS);
+            Log.d(LOGTAG, "Sent load to histogram");
+
+            if (histogramLoadIndex > (HISTOGRAM_SIZE - 2)) {
+                histogramLoadIndex = HISTOGRAM_SIZE - 1;
+                Log.e(LOGTAG, "the loading histogram size is overflow.");
+            } else if (histogramLoadIndex < HISTOGRAM_MIN_INDEX) {
+                histogramLoadIndex = HISTOGRAM_MIN_INDEX;
+            }
+
+            loadingTimeHistogram[histogramLoadIndex]++;
+
+        } catch (IllegalArgumentException e) {
+            Log.e(LOGTAG, "Invalid URL", e);
         }
-
-        domainMap.add(UrlUtils.stripCommonSubdomains(uriLink.getHost()));
-        numUri++;
-
-        long elapsedLoad = SystemClock.elapsedRealtime() - startLoadPageTime;
-        if (elapsedLoad < MIN_LOAD_TIME) {
-            return;
-        }
-
-        int histogramLoadIndex = toIntExact(elapsedLoad / LOADING_BUCKET_SIZE_MS);
-        Log.i(LOGTAG, "Sent load to histogram");
-
-        if (histogramLoadIndex > (HISTOGRAM_SIZE - 2)) {
-            histogramLoadIndex = HISTOGRAM_SIZE - 1;
-            Log.e(LOGTAG, "the loading histogram size is overflow.");
-        } else if (histogramLoadIndex < HISTOGRAM_MIN_INDEX) {
-            histogramLoadIndex = HISTOGRAM_MIN_INDEX;
-        }
-
-        loadingTimeHistogram[histogramLoadIndex]++;
     }
 
     @UiThread

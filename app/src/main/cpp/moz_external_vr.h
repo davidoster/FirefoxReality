@@ -7,6 +7,12 @@
 #ifndef GFX_VR_EXTERNAL_API_H
 #define GFX_VR_EXTERNAL_API_H
 
+#define GFX_VR_EIGHTCC(c1, c2, c3, c4, c5, c6, c7, c8) \
+  ((uint64_t)(c1) << 56 | (uint64_t)(c2) << 48 | \
+  (uint64_t)(c3) << 40 | (uint64_t)(c4) << 32 | \
+  (uint64_t)(c5) << 24 | (uint64_t)(c6) << 16 | \
+  (uint64_t)(c7) << 8 | (uint64_t)(c8))
+
 #include <stddef.h>
 #include <stdint.h>
 #include <type_traits>
@@ -29,7 +35,7 @@ namespace dom {
 #endif //  MOZILLA_INTERNAL_API
 namespace gfx {
 
-static const int32_t kVRExternalVersion = 2;
+static const int32_t kVRExternalVersion = 5;
 
 // We assign VR presentations to groups with a bitmask.
 // Currently, we will only display either content or chrome.
@@ -48,9 +54,12 @@ static const int kVRControllerMaxCount = 16;
 static const int kVRControllerMaxButtons = 64;
 static const int kVRControllerMaxAxis = 16;
 static const int kVRLayerMaxCount = 8;
+static const int kVRHapticsMaxCount = 32;
 
 #if defined(__ANDROID__)
 typedef uint64_t VRLayerTextureHandle;
+#elif defined(XP_MACOSX)
+typedef uint32_t VRLayerTextureHandle;
 #else
 typedef void* VRLayerTextureHandle;
 #endif
@@ -88,25 +97,25 @@ enum class ControllerCapabilityFlags : uint16_t {
   /**
    * Cap_Position is set if the Gamepad is capable of tracking its position.
    */
-  Cap_Position = 1 << 1,
+      Cap_Position = 1 << 1,
   /**
     * Cap_Orientation is set if the Gamepad is capable of tracking its orientation.
     */
-  Cap_Orientation = 1 << 2,
+      Cap_Orientation = 1 << 2,
   /**
    * Cap_AngularAcceleration is set if the Gamepad is capable of tracking its
    * angular acceleration.
    */
-  Cap_AngularAcceleration = 1 << 3,
+      Cap_AngularAcceleration = 1 << 3,
   /**
    * Cap_LinearAcceleration is set if the Gamepad is capable of tracking its
    * linear acceleration.
    */
-  Cap_LinearAcceleration = 1 << 4,
+      Cap_LinearAcceleration = 1 << 4,
   /**
    * Cap_All used for validity checking during IPC serialization
    */
-  Cap_All = (1 << 5) - 1
+      Cap_All = (1 << 5) - 1
 };
 
 #endif // ifndef MOZILLA_INTERNAL_API
@@ -116,11 +125,11 @@ enum class VRDisplayCapabilityFlags : uint16_t {
   /**
    * Cap_Position is set if the VRDisplay is capable of tracking its position.
    */
-  Cap_Position = 1 << 1,
+      Cap_Position = 1 << 1,
   /**
     * Cap_Orientation is set if the VRDisplay is capable of tracking its orientation.
     */
-  Cap_Orientation = 1 << 2,
+      Cap_Orientation = 1 << 2,
   /**
    * Cap_Present is set if the VRDisplay is capable of presenting content to an
    * HMD or similar device.  Can be used to indicate "magic window" devices that
@@ -128,7 +137,7 @@ enum class VRDisplayCapabilityFlags : uint16_t {
    * If false then calls to requestPresent should always fail, and
    * getEyeParameters should return null.
    */
-  Cap_Present = 1 << 3,
+      Cap_Present = 1 << 3,
   /**
    * Cap_External is set if the VRDisplay is separate from the device's
    * primary display. If presenting VR content will obscure
@@ -136,31 +145,31 @@ enum class VRDisplayCapabilityFlags : uint16_t {
    * un-set, the application should not attempt to mirror VR content
    * or update non-VR UI because that content will not be visible.
    */
-  Cap_External = 1 << 4,
+      Cap_External = 1 << 4,
   /**
    * Cap_AngularAcceleration is set if the VRDisplay is capable of tracking its
    * angular acceleration.
    */
-  Cap_AngularAcceleration = 1 << 5,
+      Cap_AngularAcceleration = 1 << 5,
   /**
    * Cap_LinearAcceleration is set if the VRDisplay is capable of tracking its
    * linear acceleration.
    */
-  Cap_LinearAcceleration = 1 << 6,
+      Cap_LinearAcceleration = 1 << 6,
   /**
    * Cap_StageParameters is set if the VRDisplay is capable of room scale VR
    * and can report the StageParameters to describe the space.
    */
-  Cap_StageParameters = 1 << 7,
+      Cap_StageParameters = 1 << 7,
   /**
    * Cap_MountDetection is set if the VRDisplay is capable of sensing when the
    * user is wearing the device.
    */
-  Cap_MountDetection = 1 << 8,
+      Cap_MountDetection = 1 << 8,
   /**
    * Cap_All used for validity checking during IPC serialization
    */
-  Cap_All = (1 << 9) - 1
+      Cap_All = (1 << 9) - 1
 };
 
 #ifdef MOZILLA_INTERNAL_API
@@ -260,10 +269,15 @@ struct VRDisplayState
     NumEyes
   };
 
-#if defined(__ANDROID__)
+  // When true, indicates that the VR service has shut down
   bool shutdown;
-#endif // defined(__ANDROID__)
+  // Minimum number of milliseconds to wait before attempting
+  // to start the VR service again
+  uint32_t mMinRestartInterval;
   char mDisplayName[kVRDisplayNameMaxLen];
+  // eight byte character code identifier
+  // LSB first, so "ABCDEFGH" -> ('H'<<56) + ('G'<<48) + ('F'<<40) + ('E'<<32) + ('D'<<24) + ('C'<<16) + ('B'<<8) + 'A').
+  uint64_t mEightCC;
   VRDisplayCapabilityFlags mCapabilityFlags;
   VRFieldOfView mEyeFOV[VRDisplayState::NumEyes];
   Point3D_POD mEyeTranslation[VRDisplayState::NumEyes];
@@ -277,6 +291,9 @@ struct VRDisplayState
   uint64_t mLastSubmittedFrameId;
   bool mLastSubmittedFrameSuccessful;
   uint32_t mPresentingGeneration;
+  // Telemetry
+  bool mReportsDroppedFrames;
+  uint64_t mDroppedFrameCount;
 };
 
 struct VRControllerState
@@ -354,6 +371,25 @@ struct VRLayerState
   };
 };
 
+struct VRHapticState
+{
+  // Reference frame for timing.
+  // When 0, this does not represent an active haptic pulse.
+  uint64_t inputFrameID;
+  // Index within VRSystemState.controllerState identifying the controller
+  // to emit the haptic pulse
+  uint32_t controllerIndex;
+  // 0-based index indicating which haptic actuator within the controller
+  uint32_t hapticIndex;
+  // Start time of the haptic feedback pulse, relative to the start of
+  // inputFrameID, in seconds
+  float pulseStart;
+  // Duration of the haptic feedback pulse, in seconds
+  float pulseDuration;
+  // Intensity of the haptic feedback pulse, from 0.0f to 1.0f
+  float pulseIntensity;
+};
+
 struct VRBrowserState
 {
 #if defined(__ANDROID__)
@@ -362,6 +398,7 @@ struct VRBrowserState
   bool presentationActive;
   bool navigationTransitionActive;
   VRLayerState layerState[kVRLayerMaxCount];
+  VRHapticState hapticState[kVRHapticsMaxCount];
 };
 
 struct VRSystemState

@@ -21,6 +21,8 @@ typedef std::shared_ptr<BrowserWorld> BrowserWorldPtr;
 typedef std::weak_ptr<BrowserWorld> BrowserWorldWeakPtr;
 class WidgetPlacement;
 typedef std::shared_ptr<WidgetPlacement> WidgetPlacementPtr;
+class Widget;
+typedef std::shared_ptr<Widget> WidgetPtr;
 
 class BrowserWorld {
 public:
@@ -47,8 +49,7 @@ public:
   void FinishWidgetResize(int32_t aHandle);
   void UpdateVisibleWidgets();
   void LayoutWidget(int32_t aHandle);
-  void FadeOut();
-  void FadeIn();
+  void SetBrightness(const float aBrightness);
   void ExitImmersive();
   JNIEnv* GetJNIEnv() const;
 protected:
@@ -64,6 +65,8 @@ protected:
   void LoadSkybox(const vrb::TransformPtr transform, const std::string& basePath);
   void CreateFloor();
   float DistanceToNode(const vrb::NodePtr& aNode, const vrb::Vector& aPosition) const;
+  WidgetPtr GetWidgetFromNode(const vrb::NodePtr& aNode) const;
+  float DistanceToPlane(const WidgetPtr& aNode, const vrb::Vector& aPosition, const vrb::Vector& aDirection) const;
 private:
   State& m;
   BrowserWorld() = delete;

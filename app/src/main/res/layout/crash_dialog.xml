@@ -1,0 +1,94 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="@dimen/crash_dialog_width"
+    android:layout_height="@dimen/crash_dialog_height"
+    android:background="@drawable/crash_dialog_background"
+    android:gravity="center_horizontal"
+    android:orientation="vertical">
+
+    <ImageView
+        android:layout_width="wrap_content"
+        android:layout_height="76dp"
+        android:layout_marginTop="25dp"
+        android:src="@drawable/sad_fox"
+        app:srcCompat="@drawable/sad_fox" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:text="@string/crash_dialog_heading"
+        android:textAlignment="center"
+        android:textSize="24sp"
+        android:textStyle="bold"
+        tools:text="@string/crash_dialog_heading" />
+
+    <TextView
+        android:id="@+id/crashMessage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="70dp"
+        android:layout_marginTop="15dp"
+        android:layout_marginEnd="70dp"
+        android:text="@string/crash_dialog_message"
+        android:textAlignment="center"
+        tools:text="@string/crash_dialog_message" />
+
+    <CheckBox
+        android:id="@+id/crashSendDataCheckbox"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="25dp"
+        android:background="@android:color/transparent"
+        android:button="@drawable/checkbox"
+        android:gravity="center_vertical"
+        android:maxHeight="18dp"
+        android:paddingStart="10dp"
+        android:text="@string/crash_dialog_send_data"
+        tools:text="@string/crash_dialog_send_data" />
+
+    <LinearLayout
+        android:id="@+id/buttonsLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="25dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/learnMoreButton"
+            android:layout_width="100dp"
+            android:layout_height="35dp"
+            android:layout_marginEnd="20dp"
+            android:background="@drawable/crash_dialog_button_background"
+            android:fontFamily="sans-serif"
+            android:scaleType="fitCenter"
+            android:text="@string/learn_more_button"
+            android:textColor="@drawable/crash_dialog_button_text_color"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/dontSendButton"
+            android:layout_width="100dp"
+            android:layout_height="35dp"
+            android:layout_marginEnd="20dp"
+            android:background="@drawable/crash_dialog_button_background"
+            android:fontFamily="sans-serif"
+            android:scaleType="fitCenter"
+            android:text="@string/do_not_sent_button"
+            android:textColor="@drawable/crash_dialog_button_text_color"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/sendDataButton"
+            android:layout_width="100dp"
+            android:layout_height="35dp"
+            android:background="@drawable/crash_dialog_button_send_background"
+            android:fontFamily="sans-serif"
+            android:scaleType="fitCenter"
+            android:text="@string/send_data_button"
+            android:textColor="@drawable/crash_dialog_button_text_color"
+            android:textStyle="bold" />
+    </LinearLayout>
+</LinearLayout>

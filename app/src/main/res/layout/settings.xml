@@ -67,12 +67,12 @@
                        android:layout_centerHorizontal="true"
                        android:visibility="invisible"/>
 
-                <org.mozilla.vrbrowser.ui.SettingsButton
+                <org.mozilla.vrbrowser.ui.views.SettingsButton
                         android:id="@+id/developerOptionsButton"
                         style="?attr/settingsButtonStyle"
                         app:settingsButtonIcon="@drawable/ic_settings_developeroptions"
-                        app:settingsButtonText="@string/settings_developer"
-                        app:settingsSecondaryText="@string/settings_options"
+                        app:settingsButtonText="@string/settings_developer_options"
+                        app:settingsButtonTextSize="52dp"
                         android:layout_centerHorizontal="true"
                         android:layout_marginTop="30dp"/>
 
@@ -83,8 +83,7 @@
                         android:layout_toLeftOf="@id/developerOptionsButton">
 
                     <TextView
-                            android:id="@+id/crashing_text"
-                            android:layout_width="wrap_content"
+                        android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:clickable="true"
@@ -93,7 +92,7 @@
                             android:paddingTop="20dp"
                             android:paddingBottom="5dp"
                             android:text="@string/settings_crash_reporting"
-                            android:textColor="@color/rhino"
+                            android:textColor="@color/white"
                             android:textSize="@dimen/settings_font_size"/>
 
                     <Switch
@@ -105,7 +104,7 @@
                             android:textOn=""
                             android:track="@drawable/switch_track"
                             android:thumb="@drawable/switch_thumb"
-                            android:enabled="false"/>
+                            android:enabled="true"/>
 
                     <TextView
                             android:id="@+id/crash_reporting_switch_text"
@@ -117,7 +116,7 @@
                             android:gravity="center"
                             android:paddingTop="5dp"
                             android:text="OFF"
-                            android:textColor="@color/rhino"
+                            android:textColor="@color/white"
                             android:textSize="@dimen/settings_font_size"/>
                 </LinearLayout>
 
@@ -128,8 +127,7 @@
                         android:layout_toRightOf="@id/developerOptionsButton">
 
                     <TextView
-                            android:id="@+id/telemetry_text"
-                            android:layout_width="wrap_content"
+                        android:layout_width="wrap_content"
                             android:layout_height="wrap_content"
                             android:layout_gravity="center"
                             android:clickable="true"
@@ -166,18 +164,17 @@
                 </LinearLayout>
 
 
-                <org.mozilla.vrbrowser.ui.SettingsButton
+                <org.mozilla.vrbrowser.ui.views.SettingsButton
                         android:id="@+id/privacyButton"
                         style="?attr/settingsButtonStyle"
                         app:settingsButtonIcon="@drawable/ic_settings_privacypolicy"
                         app:settingsButtonText="@string/settings_privacy"
-                        app:settingsSecondaryText=""
                         android:layout_alignRight="@id/center"
                         android:layout_marginRight="5dp"
                         android:layout_marginTop="-25dp"
                         android:layout_below="@id/developerOptionsButton"/>
 
-                <org.mozilla.vrbrowser.ui.SettingsButton
+                <org.mozilla.vrbrowser.ui.views.SettingsButton
                         android:id="@+id/reportButton"
                         style="?attr/settingsButtonStyle"
                         app:settingsButtonIcon="@drawable/ic_settings_reportissue"
@@ -188,7 +185,7 @@
                         android:layout_marginTop="-25dp"
                         android:layout_below="@id/developerOptionsButton"/>
 
-                <org.mozilla.vrbrowser.ui.UIButton
+                <org.mozilla.vrbrowser.ui.views.UIButton
                         android:id="@+id/settingsCancelButton"
                         android:layout_width="40dp"
                         android:layout_height="40dp"

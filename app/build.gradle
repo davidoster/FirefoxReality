@@ -10,6 +10,13 @@ def getGitHash = { ->
     return stdout.toString().trim()
 }
 
+def getCrashRestartDisabled = { ->
+    if (gradle.hasProperty("disableCrashRestart")) {
+        return gradle.disableCrashRestart
+    }
+    return "false"
+}
+
 android {
     compileSdkVersion 27
     defaultConfig {
@@ -17,8 +24,9 @@ android {
         minSdkVersion 24
         targetSdkVersion 27
         versionCode 1
-        versionName "1.0.1"
+        versionName "1.1"
         buildConfigField "String", "GIT_HASH", "\"${getGitHash()}\""
+        buildConfigField "Boolean", "DISABLE_CRASH_RESTART", getCrashRestartDisabled()
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {
@@ -29,11 +37,16 @@ android {
             }
         }
     }
+
     if (gradle.hasProperty('taskclusterBuild')) {
         project.archivesBaseName = "FirefoxReality-$defaultConfig.versionName-$generatedVersionCode"
         defaultConfig.versionCode = generatedVersionCode
     } else {
         project.archivesBaseName = "FirefoxReality"
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
     }
     buildTypes {
         release {
@@ -45,6 +58,10 @@ android {
         cmake {
             path "CMakeLists.txt"
         }
+    }
+
+    lintOptions {
+        disable "LogUsage"
     }
 
     packagingOptions {
@@ -223,8 +240,16 @@ dependencies {
     svrImplementation fileTree(dir: "${project.rootDir}/third_party/svr/", include: ['*.jar'])
     implementation 'com.android.support:design:27.1.1'
     implementation 'com.google.vr:sdk-audio:1.170.0'
-    implementation "org.mozilla.components:telemetry:0.23"
-    implementation "com.github.mozilla:mozillaspeechlibrary:1.0.4"
+    implementation "org.mozilla.components:service-telemetry:${rootProject.ext.androidComponents['version']}"
+    implementation "org.mozilla.components:browser-errorpages:${rootProject.ext.androidComponents['version']}"
+    implementation "com.github.mozilla:mozillaspeechlibrary:1.0.6"
+}
+
+if (findProject(':servo')) {
+    dependencies {
+      oculusvrImplementation project(':servo')
+      googlevrImplementation project(':servo')
+    }
 }
 
 if (findProject(':wavesdk')) {

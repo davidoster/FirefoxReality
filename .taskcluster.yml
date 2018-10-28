@@ -22,8 +22,7 @@ tasks:
           - pull_request.synchronize
           - pull_request.reopened
     payload:
-      maxRunTime: 3600
-      deadline: "{{ '2 hours' | $fromNow }}"
+      maxRunTime: 7200
       image: 'mozillamixedreality/firefoxreality'
       command:
         - /bin/bash
@@ -34,7 +33,8 @@ tasks:
           && git config advice.detachedHead false
           && git checkout {{event.head.sha}}
           && git submodule update
-          && ./gradlew --no-daemon clean assembleGooglevr assembleNoapi
+          && pushd gvr-android-sdk && ./gradlew --no-daemon --console=plain extractNDK && popd
+          && ./gradlew --no-daemon --console=plain clean assembleGooglevr assembleNoapi
     metadata:
       name: Firefox Reality for Android - Build - Pull Request
       description: Building Firefox Reality for Android (via Gradle) - triggered by a pull request.
@@ -59,8 +59,7 @@ tasks:
       - "secrets:get:project/firefoxreality/staging-signing-token"
       - "secrets:get:project/firefoxreality/symbols-token"
     payload:
-      maxRunTime: 5000
-      deadline: "{{ '2 hours' | $fromNow }}"
+      maxRunTime: 7200
       image: 'mozillamixedreality/firefoxreality'
       features:
         taskclusterProxy: true
@@ -73,10 +72,10 @@ tasks:
           && git config advice.detachedHead false
           && git rebase origin/master
           && git submodule update
-          && pushd gvr-android-sdk && ./gradlew --no-daemon extractNDK && popd
+          && pushd gvr-android-sdk && ./gradlew --no-daemon --console=plain extractNDK && popd
           && . tools/taskcluster/get_third_party.sh
           && cp tools/gradle/taskcluster.properties ./user.properties
-          && ./gradlew --no-daemon clean assembleGooglevr assembleNoapi assembleWavevr assembleSvr assembleOculusvr
+          && ./gradlew --no-daemon --console=plain clean assembleGooglevr assembleNoapi assembleWavevr assembleSvr assembleOculusvr
           && . tools/taskcluster/sign.sh staging-signing-token
           && . tools/taskcluster/upload_symbols.sh
       artifacts:
@@ -108,8 +107,7 @@ tasks:
       - "secrets:get:project/firefoxreality/release-signing-token"
       - "secrets:get:project/firefoxreality/symbols-token"
     payload:
-      maxRunTime: 5000
-      deadline: "{{ '2 hours' | $fromNow }}"
+      maxRunTime: 7200
       image: 'mozillamixedreality/firefoxreality'
       features:
         taskclusterProxy: true
@@ -122,17 +120,17 @@ tasks:
           && git config advice.detachedHead false
           && git checkout {{ event.version }}
           && git submodule update
-          && pushd gvr-android-sdk && ./gradlew --no-daemon extractNDK && popd
+          && pushd gvr-android-sdk && ./gradlew --no-daemon --console=plain extractNDK && popd
           && . tools/taskcluster/get_third_party.sh
           && cp tools/gradle/taskcluster.properties ./user.properties
-          && ./gradlew --no-daemon clean assembleGooglevr assembleNoapi assembleWavevr assembleSvr assembleOculusvr
+          && ./gradlew --no-daemon --console=plain clean assembleGooglevr assembleNoapi assembleWavevr assembleSvr assembleOculusvr
           && . tools/taskcluster/sign.sh release-signing-token -r
           && . tools/taskcluster/upload_symbols.sh
       artifacts:
         'public':
           type: 'directory'
           path: '/opt/FirefoxReality/builds/'
-          expires: "{{ '1 week' | $fromNow }}"
+          expires: "{{ '1 year' | $fromNow }}"
     metadata:
       name: Firefox Reality for Android - Release Build ({{ event.version }})
       description: Building Firefox Reality for Android (via Gradle) - triggered by release

@@ -6,6 +6,12 @@
     <uses-permission android:name="android.permission.RECORD_AUDIO"/>
     <uses-permission android:name="android.permission.CAMERA"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
+    <uses-permission android:name="org.mozilla.vrbrowser.CRASH_RECEIVER_PERMISSION"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"/>
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/>
+
+    <permission android:name="org.mozilla.vrbrowser.CRASH_RECEIVER_PERMISSION"
+                android:protectionLevel="signature"/>
 
     <application
         android:name=".VRBrowserApplication"
@@ -28,5 +34,11 @@
                 <data android:scheme="https" />
             </intent-filter>
         </activity>
+        <service
+            android:name=".crashreporting.CrashReporterService"
+            android:exported="false"
+            android:process=":crash"
+            android:permission="android.permission.BIND_JOB_SERVICE">
+        </service>
     </application>
 </manifest>

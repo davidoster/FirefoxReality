@@ -288,10 +288,12 @@ BrowserWorld::State::UpdateControllers(bool& aRelayoutWidgets) {
       resizingWidget.reset();
     }
 
+    const bool pressed = controller.buttonState & ControllerDelegate::BUTTON_TRIGGER ||
+                         controller.buttonState & ControllerDelegate::BUTTON_TOUCHPAD;
+    const bool wasPressed = controller.lastButtonState & ControllerDelegate::BUTTON_TRIGGER ||
+                              controller.lastButtonState & ControllerDelegate::BUTTON_TOUCHPAD;
     if (hitWidget && hitWidget->IsResizing()) {
       active.push_back(hitWidget.get());
-      const bool pressed = controller.buttonState & ControllerDelegate::BUTTON_TRIGGER ||
-                           controller.buttonState & ControllerDelegate::BUTTON_TOUCHPAD;
       bool aResized = false, aResizeEnded = false;
       hitWidget->HandleResize(hitPoint, pressed, aResized, aResizeEnded);
 
@@ -316,10 +318,6 @@ BrowserWorld::State::UpdateControllers(bool& aRelayoutWidgets) {
       float theX = 0.0f, theY = 0.0f;
       hitWidget->ConvertToWidgetCoordinates(hitPoint, theX, theY);
       const uint32_t handle = hitWidget->GetHandle();
-      const bool pressed = controller.buttonState & ControllerDelegate::BUTTON_TRIGGER ||
-                           controller.buttonState & ControllerDelegate::BUTTON_TOUCHPAD;
-      const bool wasPressed = controller.lastButtonState & ControllerDelegate::BUTTON_TRIGGER ||
-                              controller.lastButtonState & ControllerDelegate::BUTTON_TOUCHPAD;
       if (!pressed && wasPressed) {
         controller.inDeadZone = true;
       }
@@ -358,9 +356,11 @@ BrowserWorld::State::UpdateControllers(bool& aRelayoutWidgets) {
         }
       }
     } else if (controller.widget) {
-      VRBrowser::HandleMotionEvent(0, controller.index, JNI_FALSE, 0.0f, 0.0f);
+      VRBrowser::HandleMotionEvent(0, controller.index, pressed, 0.0f, 0.0f);
       controller.widget = 0;
 
+    } else if (wasPressed != pressed) {
+      VRBrowser::HandleMotionEvent(0, controller.index, pressed, 0.0f, 0.0f);
     }
     controller.lastButtonState = controller.buttonState;
   }
@@ -830,15 +830,9 @@ BrowserWorld::LayoutWidget(int32_t aHandle) {
 }
 
 void
-BrowserWorld::FadeOut() {
+BrowserWorld::SetBrightness(const float aBrightness) {
   ASSERT_ON_RENDER_THREAD();
-  m.fadeBlitter->FadeOut();
-}
-
-void
-BrowserWorld::FadeIn() {
-  ASSERT_ON_RENDER_THREAD();
-  m.fadeBlitter->FadeIn();
+  m.fadeBlitter->SetBrightness(aBrightness);
 }
 
 void
@@ -871,11 +865,21 @@ BrowserWorld::DrawWorld() {
   m.externalVR->SetCompositorEnabled(true);
   m.device->SetRenderMode(device::RenderMode::StandAlone);
   vrb::Vector headPosition = m.device->GetHeadTransform().GetTranslation();
+  vrb::Vector headDirection = m.device->GetHeadTransform().MultiplyDirection(vrb::Vector(0.0f, 0.0f, -1.0f));
   if (m.skybox) {
     m.skybox->SetTransform(vrb::Matrix::Translation(headPosition));
   }
   m.rootTransparent->SortNodes([=](const NodePtr& a, const NodePtr& b) {
-    return DistanceToNode(a, headPosition) < DistanceToNode(b, headPosition);
+    const float kMaxFloat = 9999999.0f;
+    float da = DistanceToPlane(GetWidgetFromNode(a), headPosition, headDirection);
+    float db = DistanceToPlane(GetWidgetFromNode(b), headPosition, headDirection);
+    if (da < 0.0f) {
+      da = std::numeric_limits<float>::max();
+    }
+    if (db < 0.0f) {
+      db = std::numeric_limits<float>::max();
+    }
+    return da < db;
   });
   m.device->StartFrame();
 
@@ -988,7 +992,9 @@ BrowserWorld::DrawSplashAnimation() {
   m.device->EndFrame();
   if (animationFinished) {
     m.splashAnimation = nullptr;
-    FadeIn();
+    if (m.fadeBlitter) {
+      m.fadeBlitter->FadeIn();
+    }
   }
 }
 
@@ -1044,8 +1050,8 @@ BrowserWorld::LoadSkybox(const vrb::TransformPtr transform, const std::string &b
 
     RenderStatePtr state = RenderState::Create(aContext);
     TextureCubeMapPtr cubemap = vrb::TextureCubeMap::Create(aContext);
-    cubemap->SetTextureParameter(GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-    cubemap->SetTextureParameter(GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    cubemap->SetTextureParameter(GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    cubemap->SetTextureParameter(GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     cubemap->SetTextureParameter(GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     cubemap->SetTextureParameter(GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     cubemap->SetTextureParameter(GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
@@ -1109,6 +1115,28 @@ BrowserWorld::DistanceToNode(const vrb::NodePtr& aTargetNode, const vrb::Vector&
   return result;
 }
 
+WidgetPtr
+BrowserWorld::GetWidgetFromNode(const vrb::NodePtr& aNode) const {
+  for (const auto & widget: m.widgets) {
+    if (widget->GetRoot() == aNode) {
+      return widget;
+    }
+  }
+  return nullptr;
+}
+
+float
+BrowserWorld::DistanceToPlane(const WidgetPtr& aWidget, const vrb::Vector& aPosition, const vrb::Vector& aDirection) const {
+  if (!aWidget) {
+    return -1.0f;
+  }
+  vrb::Vector result;
+  bool inside = false;
+  float distance = -1.0f;
+  aWidget->GetQuad()->TestIntersection(aPosition, aDirection, result, false, inside, distance);
+  return distance;
+}
+
 } // namespace crow
 
 
@@ -1149,14 +1177,9 @@ JNI_METHOD(void, finishWidgetResizeNative)
   crow::BrowserWorld::Instance().FinishWidgetResize(aHandle);
 }
 
-JNI_METHOD(void, fadeOutWorldNative)
-(JNIEnv*, jobject) {
-  crow::BrowserWorld::Instance().FadeOut();
-}
-
-JNI_METHOD(void, fadeInWorldNative)
-(JNIEnv*, jobject) {
-  crow::BrowserWorld::Instance().FadeIn();
+JNI_METHOD(void, setWorldBrightnessNative)
+(JNIEnv*, jobject, jfloat aBrightness) {
+  crow::BrowserWorld::Instance().SetBrightness(aBrightness);
 }
 
 JNI_METHOD(void, setTemporaryFilePath)
@@ -1178,6 +1201,11 @@ JNI_METHOD(void, workaroundGeckoSigAction)
     VRB_DEBUG("Successfully set MOZ_DISABLE_SIG_HANDLER");
   } else {
     VRB_ERROR("Failed to set MOZ_DISABLE_SIG_HANDLER");
+  }
+  if (putenv(strdup("MOZ_DISABLE_EXCEPTION_HANDLER_SIGILL=1")) == 0) {
+    VRB_DEBUG("Successfully set MOZ_DISABLE_EXCEPTION_HANDLER_SIGILL");
+  } else {
+    VRB_ERROR("Failed to set MOZ_DISABLE_EXCEPTION_HANDLER_SIGILL");
   }
 }
 

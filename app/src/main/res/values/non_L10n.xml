@@ -1,4 +1,5 @@
 <resources>
+    <string name="app_name" translatable="false">Firefox Reality</string>
     <string name="bug_report_url" translatable="false">mzl.la/fxr</string>
     <string name="settings_key_crash" translatable="false">settings_crash</string>
     <string name="settings_key_locale" translatable="false">settings_locale</string>
@@ -8,6 +9,7 @@
     <string name="settings_key_console_logs" translatable="false">settings_console_logs</string>
     <string name="settings_key_environment_override" translatable="false">settings_environment_override</string>
     <string name="settings_key_multiprocess" translatable="false">settings_environment_multiprocess</string>
+    <string name="settings_key_servo">settings_environment_servo</string>
     <string name="settings_key_desktop_version" translatable="false">settings_desktop_version</string>
     <string name="settings_key_input_mode" translatable="false">settings_touch_mode</string>
     <string name="settings_key_display_density" translatable="false">settings_display_density</string>
@@ -27,6 +29,11 @@
     <string name="help_url" translatable="false">https://support.mozilla.org/products/firefox-reality</string>
     <string name="list_item_view_tag" translatable="false">view</string>
     <string name="position_tag" translatable="false">position</string>
+    <string name="view_id_tag" translatable="false">view_id</string>
+    <string name="crash_dialog_learn_more_url" translatable="false">https://support.mozilla.org/kb/crash-reporting-firefox-reality</string>
+    <string name="app_permission_name" translatable="false">org.mozilla.vrbrowser.CRASH_RECEIVER_PERMISSION</string>
+    <string name="developer_options_by" translatable="false">x</string>
+    <string name="crash_app_name" translatable="false">FirefoxReality</string>
 
     <!-- SEARCH ENGINES -->
     <string name="geolocation_api_url" translatable="false">https://location.services.mozilla.com/v1/country</string>
@@ -44,4 +51,25 @@
     <string name="search_yandex_by" translatable="false">https://yandex.by/search</string>
     <string name="search_yandex_tr" translatable="false">https://yandex.com.tr/search</string>
     <string name="search_yandex_kz" translatable="false">https://yandex.kz/search</string>
+
+    <!-- Settings -->
+    <string-array name="developer_options_environments" translatable="false">
+        <item>@string/developer_options_env_void</item>
+        <item>@string/developer_options_env_cave</item>
+        <item>@string/developer_options_env_meadow</item>
+    </string-array>
+    <string-array name="developer_options_pointer_color_options" translatable="false">
+        <item>@string/developer_options_pointer_white</item>
+        <item>@string/developer_options_pointer_purple</item>
+    </string-array>
+    <string-array name="developer_options_ua_options" translatable="false">
+        <item>@string/developer_options_ua_mobile</item>
+        <item>@string/developer_options_ua_desktop</item>
+        <item>@string/developer_options_ua_vr</item>
+    </string-array>
+    <string-array name="developer_options_msaa_options" translatable="false">
+        <item>@string/developer_options_msaa_disabled</item>
+        <item>@string/developer_options_msaa_2</item>
+        <item>@string/developer_options_msaa_4</item>
+    </string-array>
 </resources>

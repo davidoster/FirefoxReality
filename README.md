@@ -4,15 +4,38 @@ The goal of the Firefox Reality project is to create a full-featured browser exc
 
 You can find us on Twitter [@MozillaReality](https://twitter.com/mozillareality) and at [mixedreality@mozilla.com](mailto:mixedreality@mozilla.com).
 
+[![Task Status](https://github.taskcluster.net/v1/repository/MozillaReality/FirefoxReality/master/badge.svg)](https://github.taskcluster.net/v1/repository/MozillaReality/FirefoxReality/master/latest) [Build results](https://github.taskcluster.net/v1/repository/MozillaReality/FirefoxReality/master/latest)
+
+## Bleeding-edge developer APKs
+
+1. Load [this TaskCluster URL](https://github.taskcluster.net/v1/repository/MozillaReality/FirefoxReality/master/latest).
+2. Click the `Firefox Reality for Android - Build - Master update →` link.
+3. Click the `Run Artifacts` tab, and click to download the APK for your platform of choice.
+
 ## Setup instructions
 
-*Make sure you are using Android NDK r17b*
+*Make sure you are using Android NDK r17b.*
 
 *Clone FirefoxReality.*
 
 ```bash
 git clone git@github.com:MozillaReality/FirefoxReality.git
 ```
+
+*Clone the third-party repo.*
+
+If you're developing for the Oculus, Snapdragon VR, or VIVE, you need to clone the repo with third-party SDK files. 
+
+```bash
+git clone git@github.com:MozillaReality/FirefoxReality-android-third-party.git third_party
+```
+
+This repo is only available to Mozilla employees. If you have access to the relevant SDK but not this repo, you can manually place them here:
+
+ - `third_party/ovr_mobile/` for Oculus (should contain a `VrApi` folder)
+ - `third_party/svr/` for Snapdragon (should contain a `libs` folder, among other things)
+ - `third_party/wavesdk/` for Vive (should contain a `build` folder, among other things)
+
 
 *Fetch Git submodules.*
 
@@ -45,11 +68,11 @@ The command line version of `gradlew` requires [JDK 8 from Oracle](http://www.or
 
 If you get an error extracting the NDK, you might need to copy the `local.properties file` from the top-level project directory into the `gvr-android-sdk` directory. If this file doesn't exist at the top-level directory either, open the top-level directory in Android Studio, and it should be created.
 
-*Open the project with [Android Studio](https://developer.android.com/studio/index.html)* then build and run it. Depending on what you already have installed in Android Studio, the build may fail and then may prompt you to install dependencies. Just keep doing as it suggests.
+*Open the project with [Android Studio](https://developer.android.com/studio/index.html)* then build and run it. Depending on what you already have installed in Android Studio, the build may fail and then may prompt you to install dependencies. Just keep doing as it suggests. To select the device to build for, go to `Tool Windows > Build Variants` and select a build variant corresponding to your device.
 
 If you run the APK on an Android device outside of Daydream or Gear VR, it will run in flat mode. To run in VR, put the device into a headset, and run the app from the VR launcher.
 
-*If you want to build FirefoxReality for WaveVR SDK*
+*If you want to build FirefoxReality for WaveVR SDK:*
 
 Download the [VIVE Wave SDK](https://developer.vive.com/resources/knowledgebase/wave-sdk/) from the [VIVE Developer Resources](https://vivedeveloper.com/), and unzip it. Then, from the top-level project directory, run:
 
@@ -75,7 +98,10 @@ geckoViewLocalX86=/path/to/your/build/geckoview-nightly-x86-64.0.20180924100359.
 - When using the native debugger you can ignore the first SIGSEGV: address access protected stop in GV thread. It's not a crash; you can click *Resume* to continue debugging.
 - On some platforms such as Oculus Go the native debugger stops on each input event. You can set this LLDB post-attach command in Android Studio to fix the problem: `pro hand -p true -s false SIGILL`
 - You can use `adb shell am start -a android.intent.action.VIEW -d "https://aframe.io" org.mozilla.vrbrowser/org.mozilla.vrbrowser.VRBrowserActivity` to load a URL from the command line
-- You can use `adb shell setprop debug.oculus.enableVideoCapture 1`to record videos on the Oculus Go. Remember to disable it when your video is ready.
+- You can use `adb shell setprop debug.oculus.enableVideoCapture 1` to record videos on the Oculus Go. Remember to disable it when your video is ready.
+- You can set `disableCrashRestart=true` in the gradle `user.properties` to disable app relaunch on crash.
 
 
-[![Task Status](https://github.taskcluster.net/v1/repository/MozillaReality/FirefoxReality/master/badge.svg)](https://github.taskcluster.net/v1/repository/MozillaReality/FirefoxReality/master/latest) [Build results](https://github.taskcluster.net/v1/repository/MozillaReality/FirefoxReality/master/latest)
+## Experimental Servo support
+
+To compile with Servo support, create a file called `user.properties` in the top-level project directory and add `enableServo=1`. Then to enable Servo in Firefox Reality, go the Developer Options panel in the Settings, and toggle the Servo option. Then a new button will be added to the navigation bar. Clicking that button will reload the current page with Servo.

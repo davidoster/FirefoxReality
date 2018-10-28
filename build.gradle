@@ -3,7 +3,14 @@
 buildscript {
     // Gecko pinned version
     ext.geckoNightly = [
-            version: '64.0.20180914100149'
+            // GeckoView versions can be found here:
+            // https://maven.mozilla.org/?prefix=maven2/org/mozilla/geckoview/
+            version: '65.0.20181023100123'
+    ]
+
+    // Android components version
+    ext.androidComponents = [
+            version: '0.27.0'
     ]
 
     repositories {
@@ -21,11 +28,13 @@ buildscript {
 allprojects {
     repositories {
         google()
-        jcenter()
-
         maven {
             url 'https://maven.mozilla.org/maven2'
         }
+        maven {
+            url 'https://download.servo.org/nightly/maven'
+        }
+        jcenter()
     }
 }
 
